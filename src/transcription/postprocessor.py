@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PostProcessorConfig:
     """Configuration for post-processing."""
+
     remove_disfluencies: bool = True
     fix_common_substitutions: bool = True
     normalize_punctuation: bool = True
@@ -31,12 +32,12 @@ class PostProcessorConfig:
 
 # Common disfluency markers in L2 Spanish learner speech
 DISFLUENCY_PATTERNS = [
-    r"\b(um+|uh+|eh+|ah+|mm+)\b",               # English hesitation
-    r"\b(este|bueno|o sea|pues|a ver)\b",          # Spanish hesitation fillers
-    r"\b(como se dice|espera|no sé)\b",            # Metacommentary
-    r"\.{2,}",                                     # Ellipsis (mid-utterance pauses)
-    r"\[.*?\]",                                    # Bracketed annotations
-    r"\(.*?\)",                                    # Parenthetical notes
+    r"\b(um+|uh+|eh+|ah+|mm+)\b",  # English hesitation
+    r"\b(este|bueno|o sea|pues|a ver)\b",  # Spanish hesitation fillers
+    r"\b(como se dice|espera|no sé)\b",  # Metacommentary
+    r"\.{2,}",  # Ellipsis (mid-utterance pauses)
+    r"\[.*?\]",  # Bracketed annotations
+    r"\(.*?\)",  # Parenthetical notes
 ]
 
 # Phonological transfer substitutions: (pattern, replacement)
@@ -45,20 +46,17 @@ SUBSTITUTION_RULES = [
     # Vowel quality errors
     (r"\bsalio\b", "salió"),
     (r"\bcomio\b", "comió"),
-    (r"\bvino\b(?! a)", "vino"),                  # keep "vino a" intact
-
+    (r"\bvino\b(?! a)", "vino"),  # keep "vino a" intact
     # Common ASR confusions in learner speech
-    (r"\bque\b(?= \w+ \w+ que)", "que"),           # relative clause que
+    (r"\bque\b(?= \w+ \w+ que)", "que"),  # relative clause que
     (r"\baber\b", "haber"),
     (r"\balla\b", "allá"),
     (r"\besta\b(?= [a-z])", "está"),
-
     # Phonological transfer: word-final devoicing
     (r"\bgraned\b", "grande"),
     (r"\bciudат\b", "ciudad"),
-
     # Partial word cleanup (common when Whisper catches restarts)
-    (r"\b\w{1,2}(?=\s+\1{3,})", ""),              # Remove short repeated starts
+    (r"\b\w{1,2}(?=\s+\1{3,})", ""),  # Remove short repeated starts
 ]
 
 
@@ -79,9 +77,7 @@ class PostProcessor:
 
     def __init__(self, config: Optional[PostProcessorConfig] = None):
         self.config = config or PostProcessorConfig()
-        self._disfluency_re = re.compile(
-            "|".join(DISFLUENCY_PATTERNS), re.IGNORECASE
-        )
+        self._disfluency_re = re.compile("|".join(DISFLUENCY_PATTERNS), re.IGNORECASE)
         logger.info("PostProcessor initialized")
 
     def process(self, text: str) -> str:

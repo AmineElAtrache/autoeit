@@ -19,8 +19,7 @@ from src.utils.metrics import (
 )
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="[%(asctime)s] %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="[%(asctime)s] %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -65,13 +64,15 @@ def score(input_csv: str, output_csv: str, use_ensemble: bool):
             --output-csv scored_results.csv
     """
     logger.info(f"Scoring transcriptions from {input_csv}")
-    
+
     pipeline = ScoringPipeline(use_ensemble=use_ensemble)
     df = pipeline.score_csv(input_csv, output_csv)
-    
+
     logger.info(f"Results saved to {output_csv}")
     logger.info(f"\nSample results:")
-    print(df[["hypothesis", "reference", "auto_score", "confidence"]].head(10).to_string())
+    print(
+        df[["hypothesis", "reference", "auto_score", "confidence"]].head(10).to_string()
+    )
 
 
 @cli.command()
@@ -108,24 +109,24 @@ def validate(scored_csv: str, output_json: str, items_per_protocol: int):
             --output-json validation.json
     """
     logger.info(f"Validating scores from {scored_csv}")
-    
+
     df = pd.read_csv(scored_csv)
-    
+
     if "auto_score" not in df.columns or "human_score" not in df.columns:
         raise ValueError("CSV must have 'auto_score' and 'human_score' columns")
-    
+
     auto_scores = df["auto_score"].tolist()
     human_scores = df["human_score"].tolist()
-    
+
     # Compute item-level metrics
     validator = ScoringValidator()
     item_metrics = validator.validate_against_baseline(auto_scores, human_scores)
-    
+
     # Compute protocol-level metrics
     protocol_metrics = validator.protocol_level_agreement(
         auto_scores, human_scores, items_per_protocol
     )
-    
+
     # Combine results
     results = {
         "item_level": item_metrics,
@@ -133,23 +134,25 @@ def validate(scored_csv: str, output_json: str, items_per_protocol: int):
         "summary": {
             "meets_goal": item_metrics["exact_agreement"] >= 0.90,
             "protocol_accuracy": protocol_metrics.get("within_10_pts", 0),
-        }
+        },
     }
-    
+
     # Save
     with open(output_json, "w") as f:
         json.dump(results, f, indent=2)
-    
+
     logger.info("\n=== Validation Results ===")
     logger.info(f"Exact Agreement: {item_metrics['exact_agreement']:.1%} (goal: ≥90%)")
     logger.info(f"Mean Absolute Difference: {item_metrics['mean_abs_diff']:.2f}")
     logger.info(f"Cohen's Kappa: {item_metrics['kappa']:.3f}")
-    
+
     if "protocol_level" in results:
         logger.info(f"\nProtocol-Level (20 items × 6 = 120 pts):")
         logger.info(f"  Within 10 pts: {protocol_metrics['within_10_pts']:.1%}")
-        logger.info(f"  Mean difference: {protocol_metrics['mean_protocol_diff']:.1f} pts")
-    
+        logger.info(
+            f"  Mean difference: {protocol_metrics['mean_protocol_diff']:.1f} pts"
+        )
+
     logger.info(f"Results saved to {output_json}")
 
 
@@ -193,23 +196,23 @@ def compare_raters(input_csv: str, output_json: str, scorer_a: str, scorer_b: st
             --scorer-b "human"
     """
     logger.info(f"Comparing {scorer_a} vs {scorer_b}")
-    
+
     df = pd.read_csv(input_csv)
-    
+
     # Validate columns
     col_a = f"{scorer_a}_score"
     col_b = f"{scorer_b}_score"
-    
+
     if col_a not in df.columns or col_b not in df.columns:
         raise ValueError(f"CSV must have '{col_a}' and '{col_b}' columns")
-    
+
     scores_a = df[col_a].tolist()
     scores_b = df[col_b].tolist()
-    
+
     # Compute agreement
     validator = ScoringValidator()
     metrics = validator.validate_against_baseline(scores_a, scores_b)
-    
+
     results = {
         "comparison": {
             "rater_a": scorer_a,
@@ -217,11 +220,11 @@ def compare_raters(input_csv: str, output_json: str, scorer_a: str, scorer_b: st
         },
         "metrics": metrics,
     }
-    
+
     # Save
     with open(output_json, "w") as f:
         json.dump(results, f, indent=2, default=float)
-    
+
     logger.info(f"\n{scorer_a} vs {scorer_b}:")
     logger.info(f"  Exact agreement: {metrics['exact_agreement']:.1%}")
     logger.info(f"  Mean absolute difference: {metrics['mean_abs_diff']:.2f}")
@@ -258,20 +261,20 @@ def score_batch(sentences_json: str, output_json: str):
             --output-json scored.json
     """
     logger.info(f"Scoring batch from {sentences_json}")
-    
+
     with open(sentences_json, "r") as f:
         sentences = json.load(f)
-    
+
     pipeline = ScoringPipeline()
     results = pipeline.score_batch_sentences(sentences)
-    
+
     # Save
     with open(output_json, "w") as f:
         json.dump(results, f, indent=2, default=float)
-    
+
     logger.info(f"Scored {len(results)} sentences")
     logger.info(f"Results saved to {output_json}")
-    
+
     # Summary
     scores = [r["score"] for r in results]
     logger.info(f"\nScore distribution:")

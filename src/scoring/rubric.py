@@ -22,24 +22,26 @@ logger = logging.getLogger(__name__)
 
 class ScoreCategory(IntEnum):
     """Point categories for EIT sentence scoring (0–6 scale)."""
-    ZERO = 0        # No recognizable target content
-    ONE = 1         # Target words present, no structure
-    TWO = 2         # Some structure, major errors
-    THREE = 3       # Mostly accurate with 2+ errors
-    FOUR = 4        # Mostly accurate with 1 significant error
-    FIVE = 5        # Near-perfect with 1 minor error
-    SIX = 6         # Perfect or near-perfect reproduction
+
+    ZERO = 0  # No recognizable target content
+    ONE = 1  # Target words present, no structure
+    TWO = 2  # Some structure, major errors
+    THREE = 3  # Mostly accurate with 2+ errors
+    FOUR = 4  # Mostly accurate with 1 significant error
+    FIVE = 5  # Near-perfect with 1 minor error
+    SIX = 6  # Perfect or near-perfect reproduction
 
 
 @dataclass
 class RubricDecision:
     """Detailed output of the rubric engine for one sentence."""
+
     score: int
     max_score: int = 6
     category: ScoreCategory = ScoreCategory.ZERO
     errors: list[str] = field(default_factory=list)
     reasoning: str = ""
-    confidence: float = 1.0                        # 1.0 = rule is deterministic
+    confidence: float = 1.0  # 1.0 = rule is deterministic
 
     @property
     def normalized_score(self) -> float:
@@ -57,15 +59,16 @@ class RubricDecision:
 @dataclass
 class RubricConfig:
     """Configuration for the rubric engine."""
+
     # Weights for different error types
-    structural_error_penalty: int = 2       # Points lost per grammatical error
-    lexical_error_penalty: int = 1          # Points lost per vocabulary error
-    omission_penalty: int = 1              # Per missing content word
-    addition_penalty: int = 1              # Per spurious content word
+    structural_error_penalty: int = 2  # Points lost per grammatical error
+    lexical_error_penalty: int = 1  # Points lost per vocabulary error
+    omission_penalty: int = 1  # Per missing content word
+    addition_penalty: int = 1  # Per spurious content word
     # Thresholds
     perfect_match_threshold: float = 0.95  # Token overlap for "perfect"
     high_similarity_threshold: float = 0.80
-    min_content_words: int = 2             # Min content words to score above 0
+    min_content_words: int = 2  # Min content words to score above 0
 
 
 class EITRubricEngine:
@@ -98,21 +101,69 @@ class EITRubricEngine:
 
     # Spanish function words (not scored for content accuracy)
     FUNCTION_WORDS = {
-        "el", "la", "los", "las", "un", "una", "unos", "unas",
-        "de", "del", "al", "a", "en", "con", "por", "para", "que",
-        "y", "o", "pero", "sino", "porque", "cuando", "como",
-        "se", "me", "te", "le", "nos", "les", "lo", "la",
-        "este", "esta", "estos", "estas", "ese", "esa", "esos", "esas",
-        "mi", "tu", "su", "nuestro", "nuestra", "sus", "mis", "tus",
-        "muy", "más", "menos", "también", "ya", "no", "sí",
+        "el",
+        "la",
+        "los",
+        "las",
+        "un",
+        "una",
+        "unos",
+        "unas",
+        "de",
+        "del",
+        "al",
+        "a",
+        "en",
+        "con",
+        "por",
+        "para",
+        "que",
+        "y",
+        "o",
+        "pero",
+        "sino",
+        "porque",
+        "cuando",
+        "como",
+        "se",
+        "me",
+        "te",
+        "le",
+        "nos",
+        "les",
+        "lo",
+        "la",
+        "este",
+        "esta",
+        "estos",
+        "estas",
+        "ese",
+        "esa",
+        "esos",
+        "esas",
+        "mi",
+        "tu",
+        "su",
+        "nuestro",
+        "nuestra",
+        "sus",
+        "mis",
+        "tus",
+        "muy",
+        "más",
+        "menos",
+        "también",
+        "ya",
+        "no",
+        "sí",
     }
 
     # Morphological equivalence groups (minor errors, -0 or -1 point)
     MORPHOLOGICAL_EQUIVALENTS = [
-        {"fui", "fue", "fuiste", "fueron", "fuimos"},         # ir/ser preterite
-        {"tengo", "tienes", "tiene", "tenemos", "tienen"},    # tener present
-        {"estoy", "estás", "está", "estamos", "están"},       # estar present
-        {"hablo", "hablas", "habla", "hablamos", "hablan"},   # hablar present
+        {"fui", "fue", "fuiste", "fueron", "fuimos"},  # ir/ser preterite
+        {"tengo", "tienes", "tiene", "tenemos", "tienen"},  # tener present
+        {"estoy", "estás", "está", "estamos", "están"},  # estar present
+        {"hablo", "hablas", "habla", "hablamos", "hablan"},  # hablar present
         {"comí", "comiste", "comió", "comimos", "comieron"},  # comer preterite
     ]
 
@@ -138,7 +189,8 @@ class EITRubricEngine:
 
         if not hyp_tokens:
             return RubricDecision(
-                score=0, category=ScoreCategory.ZERO,
+                score=0,
+                category=ScoreCategory.ZERO,
                 reasoning="Empty hypothesis — no response produced.",
                 confidence=1.0,
             )
@@ -164,10 +216,10 @@ class EITRubricEngine:
         n_omissions = len(omissions)
         n_additions = len(additions)
         total_penalty = (
-            n_structural * self.config.structural_error_penalty +
-            n_lexical * self.config.lexical_error_penalty +
-            n_omissions * self.config.omission_penalty +
-            n_additions * self.config.addition_penalty
+            n_structural * self.config.structural_error_penalty
+            + n_lexical * self.config.lexical_error_penalty
+            + n_omissions * self.config.omission_penalty
+            + n_additions * self.config.addition_penalty
         )
 
         # Determine score based on overlap and penalties
@@ -175,8 +227,13 @@ class EITRubricEngine:
         category = ScoreCategory(score)
 
         reasoning = self._build_reasoning(
-            overlap, content_overlap, structural_errors, lexical_errors,
-            omissions, additions, score
+            overlap,
+            content_overlap,
+            structural_errors,
+            lexical_errors,
+            omissions,
+            additions,
+            score,
         )
 
         return RubricDecision(
@@ -218,16 +275,16 @@ class EITRubricEngine:
     def _detect_structural_errors(self, hyp: list[str], ref: list[str]) -> list[str]:
         """Detect word-order and morphological structural violations."""
         errors = []
-        
+
         # Check for length mismatch (omissions/insertions)
         hyp_len = len(hyp)
         ref_len = len(ref)
-        
+
         if hyp_len < ref_len * 0.5:
             errors.append("Major deletion: >50% of words missing")
         elif hyp_len > ref_len * 1.5:
             errors.append("Major insertion: >50% more words than target")
-        
+
         # Check for conjugation errors in common verbs
         for hyp_word, ref_word in zip(hyp, ref):
             for morph_group in self.MORPHOLOGICAL_EQUIVALENTS:
@@ -236,7 +293,7 @@ class EITRubricEngine:
                     if hyp_word != ref_word:
                         errors.append(f"Conjugation: '{hyp_word}' vs '{ref_word}'")
                     break
-        
+
         return errors
 
     def _detect_lexical_errors(self, hyp: list[str], ref: list[str]) -> list[str]:
@@ -315,11 +372,17 @@ class EITRubricEngine:
     ) -> str:
         """Produce a human-readable explanation for the score."""
         parts = [f"Score: {score}/6."]
-        parts.append(f"Token overlap: {overlap:.1%}, content overlap: {content_overlap:.1%}.")
+        parts.append(
+            f"Token overlap: {overlap:.1%}, content overlap: {content_overlap:.1%}."
+        )
         if structural_errors:
-            parts.append(f"Structural errors ({len(structural_errors)}): {', '.join(structural_errors[:3])}.")
+            parts.append(
+                f"Structural errors ({len(structural_errors)}): {', '.join(structural_errors[:3])}."
+            )
         if lexical_errors:
-            parts.append(f"Lexical errors ({len(lexical_errors)}): {', '.join(lexical_errors[:3])}.")
+            parts.append(
+                f"Lexical errors ({len(lexical_errors)}): {', '.join(lexical_errors[:3])}."
+            )
         if omissions:
             parts.append(f"Omissions ({len(omissions)}): {', '.join(omissions[:3])}.")
         if additions:

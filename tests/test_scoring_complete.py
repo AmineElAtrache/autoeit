@@ -33,18 +33,12 @@ def ensemble():
 
 class TestPerfectMatch:
     def test_identical_sentences(self, rubric):
-        result = rubric.score(
-            "yo fui al mercado ayer",
-            "yo fui al mercado ayer"
-        )
+        result = rubric.score("yo fui al mercado ayer", "yo fui al mercado ayer")
         assert result.score == 6
         assert result.is_perfect
 
     def test_case_insensitive(self, rubric):
-        result = rubric.score(
-            "Yo Fui Al Mercado",
-            "yo fui al mercado"
-        )
+        result = rubric.score("Yo Fui Al Mercado", "yo fui al mercado")
         assert result.score == 6
 
 
@@ -63,15 +57,13 @@ class TestPartialCredit:
     def test_one_omission_scores_lower(self, rubric):
         """Omitting content words → lower score."""
         result = rubric.score(
-            "yo fui al mercado",
-            "yo fui al mercado ayer con mi madre"
+            "yo fui al mercado", "yo fui al mercado ayer con mi madre"
         )
         assert result.score < 6
 
     def test_major_omission_scores_much_lower(self, rubric):
         result = rubric.score(
-            "yo fui",
-            "yo fui al mercado ayer con mi madre y mi hermana"
+            "yo fui", "yo fui al mercado ayer con mi madre y mi hermana"
         )
         assert result.score <= 3
 
@@ -94,8 +86,7 @@ class TestConfidenceScoring:
     def test_edge_case_low_confidence(self, rubric):
         # Score near decision boundary
         result = rubric.score(
-            "yo fui al mercado",
-            "yo fui al mercado ayer con mi madre"
+            "yo fui al mercado", "yo fui al mercado ayer con mi madre"
         )
         # Confidence should be moderate
         assert 0.5 <= result.confidence <= 1.0
@@ -112,14 +103,14 @@ class TestScoringPipeline:
             input_csv = Path(tmpdir) / "input.csv"
             data = {
                 "hypothesis": ["yo fui al mercado", "mi hermana"],
-                "reference": ["yo fui al mercado", "mi hermana estudia"]
+                "reference": ["yo fui al mercado", "mi hermana estudia"],
             }
             pd.DataFrame(data).to_csv(input_csv, index=False)
-            
+
             # Score
             output_csv = Path(tmpdir) / "output.csv"
             result_df = pipeline.score_csv(input_csv, output_csv)
-            
+
             # Verify
             assert output_csv.exists()
             assert "auto_score" in result_df.columns
@@ -131,7 +122,7 @@ class TestScoringValidator:
     def test_perfect_agreement(self, validator):
         auto = [6, 4, 3, 2, 1]
         human = [6, 4, 3, 2, 1]
-        
+
         metrics = validator.validate_against_baseline(auto, human)
         assert metrics["exact_agreement"] == 1.0
         assert metrics["mean_abs_diff"] == 0.0
@@ -139,7 +130,7 @@ class TestScoringValidator:
     def test_one_point_disagreement(self, validator):
         auto = [6, 4, 3, 2, 1]
         human = [6, 5, 3, 2, 0]  # 2 disagreements
-        
+
         metrics = validator.validate_against_baseline(auto, human)
         assert metrics["exact_agreement"] == 0.6
         assert metrics["within_1_point"] >= 0.8
@@ -147,7 +138,7 @@ class TestScoringValidator:
     def test_kappa_computation(self, validator):
         auto = [0, 1, 2, 3, 4, 5, 6] * 10
         human = [0, 1, 2, 3, 4, 5, 6] * 10
-        
+
         metrics = validator.validate_against_baseline(auto, human)
         assert metrics["kappa"] == 1.0  # Perfect agreement
 
@@ -155,7 +146,7 @@ class TestScoringValidator:
         # 2 protocols × 20 items = 40 scores
         auto = [6] * 20 + [3] * 20  # 120 + 60 = 180 total
         human = [6] * 20 + [3] * 20  # Same
-        
+
         result = validator.protocol_level_agreement(auto, human, 20)
         assert result["within_10_pts"] == 1.0
         assert result["n_protocols"] == 2
@@ -164,20 +155,14 @@ class TestScoringValidator:
 class TestScoringEnsemble:
     def test_ensemble_prediction_high_confidence(self, ensemble):
         score, conf = ensemble.predict(
-            "yo fui al mercado",
-            "yo fui al mercado",
-            rule_score=6,
-            rule_confidence=0.95
+            "yo fui al mercado", "yo fui al mercado", rule_score=6, rule_confidence=0.95
         )
         assert score == 6
         assert conf >= 0.9
 
     def test_ensemble_prediction_low_confidence(self, ensemble):
         score, conf = ensemble.predict(
-            "yo fui",
-            "yo fui al mercado ayer",
-            rule_score=4,
-            rule_confidence=0.5
+            "yo fui", "yo fui al mercado ayer", rule_score=4, rule_confidence=0.5
         )
         # Should still be reasonable
         assert 0 <= score <= 6
@@ -187,7 +172,7 @@ class TestScoringEnsemble:
         # Perfect overlap
         sim = ensemble._heuristic_jaccard("yo fui", "yo fui")
         assert sim == 1.0
-        
+
         # Partial overlap
         sim = ensemble._heuristic_jaccard("yo fui", "yo fui al mercado")
         assert 0 < sim < 1
@@ -199,25 +184,16 @@ class TestScoringEnsemble:
 
 class TestErrorDetection:
     def test_omission_detection(self, rubric):
-        result = rubric.score(
-            "yo fui",
-            "yo fui al mercado"
-        )
+        result = rubric.score("yo fui", "yo fui al mercado")
         assert any("mission" in e.lower() for e in result.errors)
 
     def test_addition_detection(self, rubric):
-        result = rubric.score(
-            "yo fui extraño",
-            "yo fui"
-        )
+        result = rubric.score("yo fui extraño", "yo fui")
         # Should detect addition or different content
         assert len(result.errors) > 0
 
     def test_reasoning_provided(self, rubric):
-        result = rubric.score(
-            "yo fui",
-            "yo fui al mercado"
-        )
+        result = rubric.score("yo fui", "yo fui al mercado")
         assert len(result.reasoning) > 0
         assert "score" in result.reasoning.lower()
 
@@ -228,9 +204,9 @@ class TestBatchScoring:
             {"hypothesis": "yo fui", "reference": "yo fui al mercado"},
             {"hypothesis": "mi hermana", "reference": "mi hermana estudia"},
         ]
-        
+
         results = pipeline.score_batch_sentences(sentences)
-        
+
         assert len(results) == 2
         assert all(0 <= r["score"] <= 6 for r in results)
         assert all("reasoning" in r for r in results)
@@ -246,9 +222,9 @@ class TestScoreDistribution:
             ("yo fui al mercado", "yo fui al mercado ayer"),  # High (5-)
             ("yo fui al mercado ayer", "yo fui al mercado ayer"),  # Perfect (6)
         ]
-        
+
         scores = [rubric.score(hyp, ref).score for hyp, ref in test_cases]
-        
+
         # Should have variety
         assert len(set(scores)) > 1
         # Should range from 0 to 6
@@ -263,8 +239,8 @@ class TestGoalCompletion:
         n_items = 100
         auto = [6] * 90 + [3] * 10
         human = [6] * 100
-        
+
         metrics = validator.validate_against_baseline(auto, human)
-        
+
         # Should detect near-90% agreement (allowing small tolerance)
         assert metrics["exact_agreement"] >= 0.85

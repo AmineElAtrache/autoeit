@@ -80,7 +80,7 @@ class TestTranscriptionEvaluator:
             )
             for s in sample_data
         ]
-        
+
         eval_result = evaluator._aggregate(samples)
         assert eval_result.total_samples == len(sample_data)
         assert eval_result.avg_wer >= 0.0
@@ -101,14 +101,14 @@ class TestTranscriptionEvaluator:
                 ],
             }
             pd.DataFrame(data).to_csv(csv_path, index=False)
-            
+
             eval_result = evaluator.evaluate_csv(
                 csv_path,
                 hyp_col="hypothesis",
                 ref_col="reference",
                 audio_col="audio",
             )
-            
+
             assert eval_result.total_samples == 2
             assert eval_result.exact_match_rate == 0.5
 
@@ -121,17 +121,17 @@ class TestTranscriptionEvaluator:
             )
             for s in sample_data
         ]
-        
+
         eval_result = evaluator._aggregate(samples)
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "report.json"
             evaluator.save_report(eval_result, output_path)
-            
+
             assert output_path.exists()
             with open(output_path) as f:
                 report = json.load(f)
-            
+
             assert "avg_wer" in report
             assert "total_samples" in report
 
@@ -165,7 +165,7 @@ class TestMeetsTarget:
             )
             for i in range(10)
         ]
-        
+
         eval_result = evaluator._aggregate(samples)
         assert eval_result.meets_target is True
         assert eval_result.avg_wer <= evaluator.target_wer
@@ -179,7 +179,7 @@ class TestMeetsTarget:
             )
             for i in range(10)
         ]
-        
+
         eval_result = evaluator._aggregate(samples)
         assert eval_result.meets_target is False
         assert eval_result.avg_wer > evaluator.target_wer

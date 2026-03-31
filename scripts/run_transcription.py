@@ -15,8 +15,7 @@ from src.transcription.trainer import WhisperEITTrainer, TrainerConfig, EITAudio
 from src.utils.metrics import word_error_rate, percent_agreement
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="[%(asctime)s] %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="[%(asctime)s] %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -57,12 +56,12 @@ def transcribe(audio_dir: str, output_csv: str, checkpoint: Optional[str]):
             --checkpoint checkpoints/whisper-eit-v2
     """
     logger.info(f"Transcribing audio from {audio_dir}")
-    
+
     pipeline = TranscriptionPipeline()
     if checkpoint:
         logger.info(f"Loading fine-tuned model from {checkpoint}")
         pipeline = TranscriptionPipeline.from_pretrained(checkpoint)
-    
+
     df = pipeline.transcribe_batch(audio_dir, output_csv)
     logger.info(f"Results saved to {output_csv}")
     logger.info(f"\nSummary:\n{df.head()}")
@@ -93,19 +92,19 @@ def evaluate(results_csv: str, output_json: str):
             --output-json eval_metrics.json
     """
     logger.info(f"Evaluating transcriptions from {results_csv}")
-    
+
     df = pd.read_csv(results_csv)
-    
+
     if "transcription" not in df.columns or "reference" not in df.columns:
         raise ValueError("CSV must have 'transcription' and 'reference' columns")
-    
+
     hypotheses = df["transcription"].tolist()
     references = df["reference"].tolist()
-    
+
     # Compute metrics
     wer = word_error_rate(hypotheses, references)
     agreement = percent_agreement(hypotheses, references)
-    
+
     metrics = {
         "wer": float(wer),
         "agreement": float(agreement),
@@ -113,11 +112,11 @@ def evaluate(results_csv: str, output_json: str):
         "goal_wer": 0.10,
         "meets_target": wer <= 0.10,
     }
-    
+
     # Save results
     with open(output_json, "w") as f:
         json.dump(metrics, f, indent=2)
-    
+
     logger.info(f"\n=== Evaluation Results ===")
     logger.info(f"WER: {wer:.2%} (target: ≤10%)")
     logger.info(f"Exact Agreement: {agreement:.2%}")
@@ -183,23 +182,23 @@ def train(
             --batch-size 4
     """
     logger.info("=== Starting Whisper Fine-tuning ===")
-    
+
     config = TrainerConfig(
         output_dir=output_dir,
         num_train_epochs=epochs,
         per_device_train_batch_size=batch_size,
     )
-    
+
     trainer = WhisperEITTrainer(config)
     trainer.load_model_and_processor()
-    
+
     # Load datasets
     train_dataset = EITAudioDataset(
         train_audio_dir,
         train_manifest,
         trainer.processor,
     )
-    
+
     eval_dataset = None
     if eval_manifest:
         eval_dataset = EITAudioDataset(
@@ -207,13 +206,13 @@ def train(
             eval_manifest,
             trainer.processor,
         )
-    
+
     # Train
     metrics = trainer.train(train_dataset, eval_dataset)
-    
+
     # Save model
     trainer.save_model(output_dir)
-    
+
     logger.info(f"Training complete. Model saved to {output_dir}")
     logger.info(f"Metrics: {json.dumps(metrics, indent=2)}")
 
@@ -251,22 +250,18 @@ def create_manifest(input_dir: str, output_manifest: str):
     """
     input_dir = Path(input_dir)
     audio_files = sorted(
-        list(input_dir.glob("*.wav")) +
-        list(input_dir.glob("*.mp3")) +
-        list(input_dir.glob("*.flac"))
+        list(input_dir.glob("*.wav"))
+        + list(input_dir.glob("*.mp3"))
+        + list(input_dir.glob("*.flac"))
     )
-    
+
     manifest = [
-        {
-            "audio": f.name,
-            "reference": "[ADD REFERENCE TEXT HERE]"
-        }
-        for f in audio_files
+        {"audio": f.name, "reference": "[ADD REFERENCE TEXT HERE]"} for f in audio_files
     ]
-    
+
     with open(output_manifest, "w") as f:
         json.dump(manifest, f, indent=2)
-    
+
     logger.info(f"Created manifest with {len(manifest)} samples")
     logger.info(f"Manifest saved to {output_manifest}")
     logger.info("⚠️  Please edit the manifest and add reference transcriptions")

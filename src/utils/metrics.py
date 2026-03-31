@@ -92,10 +92,9 @@ def cohens_kappa(scores_a: list[int], scores_b: list[int], max_score: int = 6) -
     for a, b in zip(scores_a, scores_b):
         conf_matrix[a][b] += 1
 
-    weights = np.array([
-        [(i - j) ** 2 / (k - 1) ** 2 for j in range(k)]
-        for i in range(k)
-    ])
+    weights = np.array(
+        [[(i - j) ** 2 / (k - 1) ** 2 for j in range(k)] for i in range(k)]
+    )
 
     row_marginal = conf_matrix.sum(axis=1) / n
     col_marginal = conf_matrix.sum(axis=0) / n
@@ -138,13 +137,15 @@ def score_difference_stats(
         human_total = sum(human_scores[start:end])
         protocol_diffs.append(abs(auto_total - human_total))
 
-    diffs = np.array(protocol_diffs) if protocol_diffs else np.array([
-        abs(sum(auto_scores) - sum(human_scores))
-    ])
+    diffs = (
+        np.array(protocol_diffs)
+        if protocol_diffs
+        else np.array([abs(sum(auto_scores) - sum(human_scores))])
+    )
 
     return {
         "mean_abs_diff": float(diffs.mean()),
-        "rmse": float(np.sqrt((diffs ** 2).mean())),
+        "rmse": float(np.sqrt((diffs**2).mean())),
         "max_diff": float(diffs.max()),
         "within_10_pts": float((diffs <= 10).mean()),
         "n_protocols": len(diffs),
@@ -156,6 +157,7 @@ def confusion_matrix(
 ) -> np.ndarray:
     """Compute confusion matrix for scoring evaluation."""
     from typing import Optional
+
     if labels is None:
         labels = sorted(set(predicted) | set(actual))
     label_to_idx = {l: i for i, l in enumerate(labels)}

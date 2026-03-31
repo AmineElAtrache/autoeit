@@ -6,7 +6,11 @@ import numpy as np
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from src.transcription.preprocessor import AudioPreprocessor, PreprocessorConfig, AudioSegment
+from src.transcription.preprocessor import (
+    AudioPreprocessor,
+    PreprocessorConfig,
+    AudioSegment,
+)
 
 
 @pytest.fixture
@@ -14,7 +18,7 @@ def config():
     return PreprocessorConfig(
         target_sample_rate=16000,
         normalize=True,
-        noise_reduce=False,   # Disable for unit tests (no real audio)
+        noise_reduce=False,  # Disable for unit tests (no real audio)
         trim_silence=True,
     )
 
@@ -56,7 +60,7 @@ class TestResample:
         wave = torch.randn(1, int(sr_in * duration))
         resampled = preprocessor._resample(wave, sr_in)
         expected_len = int(sr_out * duration)
-        assert abs(resampled.shape[-1] - expected_len) <= 2   # Allow ±2 sample rounding
+        assert abs(resampled.shape[-1] - expected_len) <= 2  # Allow ±2 sample rounding
 
     def test_resampler_cache(self, preprocessor):
         wave = torch.randn(1, 44100)
@@ -121,7 +125,11 @@ class TestSegmentation:
             end_time=0.006,
         )
         segments = [tiny]
-        filtered = [s for s in segments if 0.5 <= s.duration <= preprocessor.config.max_duration_s]
+        filtered = [
+            s
+            for s in segments
+            if 0.5 <= s.duration <= preprocessor.config.max_duration_s
+        ]
         assert len(filtered) == 0
 
 

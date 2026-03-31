@@ -25,8 +25,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TranscriptionResult:
     """Output from the transcriber for a single audio segment."""
+
     text: str
-    confidence: float                     # Average log-prob
+    confidence: float  # Average log-prob
     language: str = "es"
     segment_start: float = 0.0
     segment_end: float = 0.0
@@ -41,16 +42,19 @@ class TranscriptionResult:
 @dataclass
 class TranscriberConfig:
     """Configuration for the ASR transcriber."""
+
     model_id: str = "openai/whisper-large-v3"
-    lora_checkpoint: Optional[str] = None       # Path to LoRA adapter weights
+    lora_checkpoint: Optional[str] = None  # Path to LoRA adapter weights
     language: str = "es"
     task: str = "transcribe"
     beam_size: int = 5
-    temperature: float = 0.0                   # 0 = greedy; > 0 = sampling
+    temperature: float = 0.0  # 0 = greedy; > 0 = sampling
     compression_ratio_threshold: float = 2.4
     logprob_threshold: float = -1.0
     no_speech_threshold: float = 0.6
-    condition_on_previous_text: bool = False    # Important for EIT: each sentence independent
+    condition_on_previous_text: bool = (
+        False  # Important for EIT: each sentence independent
+    )
     fp16: bool = True
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
     batch_size: int = 8
@@ -84,7 +88,9 @@ class WhisperEITTranscriber:
         self._loaded = False
 
     @classmethod
-    def from_pretrained(cls, checkpoint_path: str | Path, **kwargs) -> "WhisperEITTranscriber":
+    def from_pretrained(
+        cls, checkpoint_path: str | Path, **kwargs
+    ) -> "WhisperEITTranscriber":
         """Load a fine-tuned checkpoint (LoRA adapter + base model)."""
         instance = cls(**kwargs)
         instance._load_model(str(checkpoint_path))
@@ -134,7 +140,9 @@ class WhisperEITTranscriber:
             language=self.config.language,
             task=self.config.task,
             num_beams=self.config.beam_size,
-            temperature=self.config.temperature if self.config.temperature > 0 else None,
+            temperature=(
+                self.config.temperature if self.config.temperature > 0 else None
+            ),
             do_sample=self.config.temperature > 0,
             return_dict_in_generate=True,
             output_scores=True,
@@ -167,11 +175,13 @@ class WhisperEITTranscriber:
             segment_end=segment.end_time,
         )
 
-    def transcribe_batch(self, segments: list[AudioSegment]) -> list[TranscriptionResult]:
+    def transcribe_batch(
+        self, segments: list[AudioSegment]
+    ) -> list[TranscriptionResult]:
         """Transcribe a batch of segments efficiently."""
         results = []
         for i in range(0, len(segments), self.config.batch_size):
-            batch = segments[i:i + self.config.batch_size]
+            batch = segments[i : i + self.config.batch_size]
             for segment in batch:
                 results.append(self.transcribe_segment(segment))
         return results
@@ -179,6 +189,7 @@ class WhisperEITTranscriber:
     def transcribe_file(self, audio_path: str | Path) -> list[TranscriptionResult]:
         """Convenience: preprocess + transcribe a full audio file."""
         from .preprocessor import AudioPreprocessor
+
         preprocessor = AudioPreprocessor()
         segments = preprocessor.process(audio_path)
         return self.transcribe_batch(segments)

@@ -21,25 +21,27 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PreprocessorConfig:
     """Configuration for the audio preprocessor."""
-    target_sample_rate: int = 16000          # Whisper expects 16kHz
-    target_channels: int = 1                 # Mono
-    min_silence_ms: int = 300               # ms of silence to split on
-    silence_threshold_db: float = -40.0     # dB threshold for silence
-    max_duration_s: float = 30.0            # Max segment length (Whisper limit)
-    normalize: bool = True                  # RMS normalization
-    noise_reduce: bool = True               # Spectral noise gating
-    noise_gate_db: float = -35.0            # Noise gate threshold
-    trim_silence: bool = True               # Trim leading/trailing silence
-    speed_perturbation: bool = False        # Data augmentation only
+
+    target_sample_rate: int = 16000  # Whisper expects 16kHz
+    target_channels: int = 1  # Mono
+    min_silence_ms: int = 300  # ms of silence to split on
+    silence_threshold_db: float = -40.0  # dB threshold for silence
+    max_duration_s: float = 30.0  # Max segment length (Whisper limit)
+    normalize: bool = True  # RMS normalization
+    noise_reduce: bool = True  # Spectral noise gating
+    noise_gate_db: float = -35.0  # Noise gate threshold
+    trim_silence: bool = True  # Trim leading/trailing silence
+    speed_perturbation: bool = False  # Data augmentation only
     speed_factors: Tuple[float, ...] = (0.9, 1.0, 1.1)
 
 
 @dataclass
 class AudioSegment:
     """A processed audio segment ready for transcription."""
-    waveform: torch.Tensor                  # Shape: (1, N)
+
+    waveform: torch.Tensor  # Shape: (1, N)
     sample_rate: int
-    start_time: float                       # Seconds from original file start
+    start_time: float  # Seconds from original file start
     end_time: float
     file_path: Optional[Path] = None
     metadata: dict = field(default_factory=dict)
@@ -118,12 +120,16 @@ class AudioPreprocessor:
             segments = [self._trim_segment(s) for s in segments]
 
         # Step 8: Drop segments that are too long (>30s) or too short (<0.5s)
-        segments = [s for s in segments if 0.5 <= s.duration <= self.config.max_duration_s]
+        segments = [
+            s for s in segments if 0.5 <= s.duration <= self.config.max_duration_s
+        ]
 
         logger.info("Produced %d segments from %s", len(segments), audio_path.name)
         return segments
 
-    def process_batch(self, audio_paths: list[str | Path]) -> dict[str, list[AudioSegment]]:
+    def process_batch(
+        self, audio_paths: list[str | Path]
+    ) -> dict[str, list[AudioSegment]]:
         """Process multiple audio files."""
         results = {}
         for path in audio_paths:
@@ -152,7 +158,9 @@ class AudioPreprocessor:
             return waveform
         key = (orig_sr, self.config.target_sample_rate)
         if key not in self._resampler_cache:
-            self._resampler_cache[key] = T.Resample(orig_sr, self.config.target_sample_rate)
+            self._resampler_cache[key] = T.Resample(
+                orig_sr, self.config.target_sample_rate
+            )
         return self._resampler_cache[key](waveform)
 
     def _to_mono(self, waveform: torch.Tensor) -> torch.Tensor:
@@ -161,7 +169,9 @@ class AudioPreprocessor:
             waveform = waveform.mean(dim=0, keepdim=True)
         return waveform
 
-    def _normalize(self, waveform: torch.Tensor, target_rms: float = 0.1) -> torch.Tensor:
+    def _normalize(
+        self, waveform: torch.Tensor, target_rms: float = 0.1
+    ) -> torch.Tensor:
         """RMS normalization."""
         rms = waveform.pow(2).mean().sqrt()
         if rms > 1e-8:
@@ -208,7 +218,7 @@ class AudioPreprocessor:
         Uses energy-based VAD to find silence boundaries.
         """
         sr = self.config.target_sample_rate
-        frame_size = int(0.02 * sr)   # 20ms frames
+        frame_size = int(0.02 * sr)  # 20ms frames
         threshold = 10 ** (self.config.silence_threshold_db / 20)
         min_silence_frames = int(self.config.min_silence_ms / 20)
 
@@ -216,10 +226,12 @@ class AudioPreprocessor:
         n_frames = len(audio) // frame_size
 
         # Compute per-frame RMS energy
-        energy = np.array([
-            np.sqrt(np.mean(audio[i*frame_size:(i+1)*frame_size]**2))
-            for i in range(n_frames)
-        ])
+        energy = np.array(
+            [
+                np.sqrt(np.mean(audio[i * frame_size : (i + 1) * frame_size] ** 2))
+                for i in range(n_frames)
+            ]
+        )
 
         # Detect speech/silence frames
         is_speech = energy > threshold
@@ -242,38 +254,44 @@ class AudioPreprocessor:
                     if silence_count >= min_silence_frames:
                         end_frame = i - silence_count
                         seg_waveform = torch.tensor(
-                            audio[start_frame*frame_size:end_frame*frame_size]
+                            audio[start_frame * frame_size : end_frame * frame_size]
                         ).unsqueeze(0)
-                        segments.append(AudioSegment(
-                            waveform=seg_waveform,
-                            sample_rate=sr,
-                            start_time=start_frame * frame_size / sr,
-                            end_time=end_frame * frame_size / sr,
-                            file_path=path,
-                        ))
+                        segments.append(
+                            AudioSegment(
+                                waveform=seg_waveform,
+                                sample_rate=sr,
+                                start_time=start_frame * frame_size / sr,
+                                end_time=end_frame * frame_size / sr,
+                                file_path=path,
+                            )
+                        )
                         in_speech = False
                         silence_count = 0
 
         # Handle last segment
         if in_speech:
-            seg_waveform = torch.tensor(audio[start_frame*frame_size:]).unsqueeze(0)
-            segments.append(AudioSegment(
-                waveform=seg_waveform,
-                sample_rate=sr,
-                start_time=start_frame * frame_size / sr,
-                end_time=len(audio) / sr,
-                file_path=path,
-            ))
+            seg_waveform = torch.tensor(audio[start_frame * frame_size :]).unsqueeze(0)
+            segments.append(
+                AudioSegment(
+                    waveform=seg_waveform,
+                    sample_rate=sr,
+                    start_time=start_frame * frame_size / sr,
+                    end_time=len(audio) / sr,
+                    file_path=path,
+                )
+            )
 
         # Fall back to treating whole file as one segment
         if not segments:
-            segments = [AudioSegment(
-                waveform=waveform,
-                sample_rate=sr,
-                start_time=0.0,
-                end_time=len(audio) / sr,
-                file_path=path,
-            )]
+            segments = [
+                AudioSegment(
+                    waveform=waveform,
+                    sample_rate=sr,
+                    start_time=0.0,
+                    end_time=len(audio) / sr,
+                    file_path=path,
+                )
+            ]
 
         return segments
 
@@ -286,8 +304,10 @@ class AudioPreprocessor:
         # Find first and last speech frame
         n_frames = len(audio) // frame_size
         speech_frames = [
-            i for i in range(n_frames)
-            if np.sqrt(np.mean(audio[i*frame_size:(i+1)*frame_size]**2)) > threshold
+            i
+            for i in range(n_frames)
+            if np.sqrt(np.mean(audio[i * frame_size : (i + 1) * frame_size] ** 2))
+            > threshold
         ]
 
         if not speech_frames:
