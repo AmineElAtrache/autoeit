@@ -1,0 +1,122 @@
+[
+  {
+    "hypothesis": "yo fui al mercado ayer",
+    "reference": "yo fui al mercado ayer",
+    "human_score": 6,
+    "category": "Perfect match"
+  },
+  {
+    "hypothesis": "yo fui al mercado",
+    "reference": "yo fui al mercado ayer",
+    "human_score": 5,
+    "category": "Near-perfect, small omission"
+  },
+  {
+    "hypothesis": "fui mercado",
+    "reference": "yo fui al mercado ayer",
+    "human_score": 2,
+    "category": "Major structural errors, missing content"
+  },
+  {
+    "hypothesis": "mi hermana estudia en la universidad",
+    "reference": "mi hermana estudia en la universidad",
+    "human_score": 6,
+    "category": "Perfect match"
+  },
+  {
+    "hypothesis": "mi hermana estudia",
+    "reference": "mi hermana estudia en la universidad",
+    "human_score": 4,
+    "category": "Mostly correct with omissions"
+  },
+  {
+    "hypothesis": "yo come pan",
+    "reference": "yo como pan",
+    "human_score": 4,
+    "category": "Minor grammar error (verb conjugation)"
+  },
+  {
+    "hypothesis": "los gatos durmiendo",
+    "reference": "los gatos estan durmiendo",
+    "human_score": 3,
+    "category": "Structure + vocabulary issues"
+  },
+  {
+    "hypothesis": "nosotros habemos",
+    "reference": "nosotros hemos comido",
+    "human_score": 2,
+    "category": "Verb conjugation, major omission"
+  },
+  {
+    "hypothesis": "ella come una manzana roja",
+    "reference": "ella come una manzana roja",
+    "human_score": 6,
+    "category": "Perfect match"
+  },
+  {
+    "hypothesis": "",
+    "reference": "voy a la escuela todos los dias",
+    "human_score": 0,
+    "category": "No response"
+  },
+  {
+    "hypothesis": "voy escuela dias",
+    "reference": "voy a la escuela todos los dias",
+    "human_score": 2,
+    "category": "Missing function words, content incomplete"
+  },
+  {
+    "hypothesis": "el nino esta corriendo muy rapido",
+    "reference": "el nino esta corriendo",
+    "human_score": 5,
+    "category": "Extra content but still correct"
+  },
+  {
+    "hypothesis": "mi familia es muy grande",
+    "reference": "mi familia es muy grande",
+    "human_score": 6,
+    "category": "Perfect match"
+  },
+  {
+    "hypothesis": "mi familia grande",
+    "reference": "mi familia es muy grande",
+    "human_score": 3,
+    "category": "Structure error (missing copula verb)"
+  },
+  {
+    "hypothesis": "en la casa hay tres cuartos",
+    "reference": "en la casa hay tres cuartos",
+    "human_score": 6,
+    "category": "Perfect match"
+  },
+  {
+    "hypothesis": "casa hay cuartos",
+    "reference": "en la casa hay tres cuartos",
+    "human_score": 2,
+    "category": "Missing prepositions and quantity"
+  },
+  {
+    "hypothesis": "por la manana bebo cafe",
+    "reference": "por la manana bebo cafe",
+    "human_score": 6,
+    "category": "Perfect match"
+  },
+  {
+    "hypothesis": "manana bebo leche",
+    "reference": "por la manana bebo cafe",
+    "human_score": 2,
+    "category": "Vocabulary substitution + structure error"
+  },
+  {
+    "hypothesis": "mis amigos jugando futbol en el parque",
+    "reference": "mis amigos estan jugando futbol en el parque",
+    "human_score": 4,
+    "category": "Content correct but missing auxiliary verb"
+  },
+  {
+    "hypothesis": "nosotros ir cine",
+    "reference": "nosotros vamos al cine",
+    "human_score": 1,
+    "category": "Verb form error, preposition missing, wrong verb tense"
+  }
+]

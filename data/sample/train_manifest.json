@@ -1,0 +1,34 @@
+[
+  {
+    "audio": "sample_001.wav",
+    "reference": "yo fui al mercado ayer con mi madre"
+  },
+  {
+    "audio": "sample_002.wav",
+    "reference": "mi hermana estudia en la universidad"
+  },
+  {
+    "audio": "sample_003.wav",
+    "reference": "nosotros viajamos a españa el verano pasado"
+  },
+  {
+    "audio": "sample_004.wav",
+    "reference": "el gato está durmiendo en la sala"
+  },
+  {
+    "audio": "sample_005.wav",
+    "reference": "quiero comprar un libro nuevo esta semana"
+  },
+  {
+    "audio": "sample_006.wav",
+    "reference": "ella come manzanas todos los días"
+  },
+  {
+    "audio": "sample_007.wav",
+    "reference": "los niños juegan en el parque por la tarde"
+  },
+  {
+    "audio": "sample_008.wav",
+    "reference": "mi amigo tiene una computadora muy rápida"
+  }
+]

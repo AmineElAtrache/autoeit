@@ -1,0 +1,18 @@
+[
+  {
+    "audio": "eval_001.wav",
+    "reference": "le gusta viajar a diferentes países"
+  },
+  {
+    "audio": "eval_002.wav",
+    "reference": "mi padre trabaja en una oficina grande"
+  },
+  {
+    "audio": "eval_003.wav",
+    "reference": "tengo tres hermanos y una hermana"
+  },
+  {
+    "audio": "eval_004.wav",
+    "reference": "el perro corre muy rápido en el bosque"
+  }
+]
